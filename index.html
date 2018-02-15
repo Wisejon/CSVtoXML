@@ -21,10 +21,25 @@
     <div class="row">
       <div class="col-md-2"></div>
       <div class="col-md-8">
-        <h2>Input</h2>
+        <h1>CSV DATA TO XML DATA</h1>
+        <h3>Instructions on How to Use This Tool</h3>
+        <p>This tool is to be used in converting the output of the Liaison Coursework CSV into XML format for importing into CollegeNET. This tool is provided as is and comes with some caveats.</p>
+        <ul>
+          <li> Your data must be provided with the header rows (2) in the Input</li>
+          <li> Your column headers are as follows:<br/> <samp>CAS ID,First Name,Last Name,Prefix,Course,Applicant Grade,Credits,CAS Grade,Verified Grade,Verified Credits,College Code,College,Year,Term,Term Type,Status,Level,Subject,Classification</samp></li>
+          <li> Any additional commas (,) in your coursework will mess up the output. Before uploading be sure to scan your import text and your output text to make sure that they look correct. I put a simple error check in place by searching for <span class="alert-danger">"##### ERROR"</span></li>
+          <li> Ampersands will be converted to 'and' and the following characters will be removed to conform with XML standards: > < " '</li>
+        </ul>
+      </div>
+      <div class="col-md-2"></div>
+    </div>
+    <div class="row">
+      <div class="col-md-2"></div>
+      <div class="col-md-8">
+        <h3>Input</h3>
         <textarea class="form-control" rows="10" id="Input"></textarea>
         <br/>
-        <button class="btn btn-primary" href="#" onclick="outputArray();">Action</button>
+        <button class="btn btn-primary" href="#" onclick="outputArray();">Convert</button>
         <button class="btn btn-info" href="#" onclick="reset();">Reset</button>
         <hr/>
       </div>
@@ -33,7 +48,7 @@
     <div class="row">
       <div class="col-md-2"></div>
       <div class="col-md-8">
-        <h2>Output</h2>
+        <h3>Output</h3>
         <textarea class="form-control" rows="10" id="Output"></textarea>
       </div>
       <div class="col-md-2"></div>
@@ -48,15 +63,69 @@
       function reset(){
         $('#Output').replaceWith('<textarea class="form-control" rows="10" id="Output"></textarea>');
       }
+      function xmlFixing(line){
+        
+        return line;
+      }
+
+
       function outputArray(){
+        // split into lines
+        
         var aLines = $('#Input').val().split('\n');
-        //alert(aLines.length + " : " + aLines[0]);
-        //output array to file
-        var outputString = "HDR|" + aLines.length + "\n";
-        outputString += aLines.join('\n');
-        outputString += "\nEND|" + aLines.length;
+        
+        //kick out first 2 lines
+        aLines.shift();
+        aLines.shift();
+        //output array to string var
+        var outputString = "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n\t<test_scores> \n\t\t" ; 
+        for (var i=0; i < aLines.length; i++){
+          var line = aLines[i].toString();
+
+          // replacements for XML validation
+          //kick out ' " > and <
+          line = line.replace(/'|"|<|>/gi,"");
+          //replace & with 'and'
+          line = line.replace(/&/gi,"and");
+
+          //place line into a new array
+          var array = line.split(",");
+
+          //date and month vars
+          var month = "";
+          var date = "";
+          
+          // calc month: =IF(LEFT(N3,3)="SPR",3,IF(LEFT(N3,3)="SUM",6,IF(LEFT(N3,3)="FAL",9,IF(ISBLANK(N3),,1))))
+          if (array[13]){
+            if (array[13].toString().toUpperCase().startsWith("SPR")){
+              month = "03";
+            } else if (array[13].toString().toUpperCase().startsWith("SUM")){
+              month = "06";
+            } else if (array[13].toString().toUpperCase().startsWith("FAL")){
+              month = "09";
+            } else{
+              month = "01";
+            }
+          }
+          //alert (array[12]);
+          // build date field
+          date = array[12].toString() + "-" + month + "-01";
+          // build new value lineString
+          var line = "<test_score>\n\t\t<key CAS_CASPA-CAS_ID='" + array[0].toString() + "'/>\n\t\t" + "<type>COURSE</type>\n\t\t" + "<date>" + date + "</date>\n\t\t" + "<source>" + array[3].toString() + "</source>\n\t\t" + "<coursename>" + array[4].toString() + "</coursename>\n\t\t" + "<appgrade>" + array[5].toString() + "</appgrade>\n\t\t" + "<credits>" + array[6].toString() + "</credits>\n\t\t" + "<grade>" + array[7].toString() + "</grade>\n\t\t" + "<verifiedgrade>" + array[8].toString() + "</verifiedgrade>\n\t\t" + "<verifiedcredits>" + array[9].toString() + "</verifiedcredits>\n\t\t" + "<collegecode>" + array[10].toString() + "</collegecode>\n\t\t" + "<college>" + array[11].toString() + "</college>\n\t\t" + "<year>" + array[12].toString() + "</year>\n\t\t" + "<term>" + array[13].toString() + "</term>\n\t\t" + "<termtype>" + array[14].toString() + "</termtype>\n\t\t" + "<status>" + array[15].toString() + "</status>\n\t\t" + "<level>" + array[16].toString() + "</level>\n\t\t" + "<category>" + array[17].toString() + "</category>\n\t\t" + "<classification>" + array[18].toString() + "</classification>\n\t" + "</test_score>";
+
+          ///horrible way to check for additional array items
+          if (array[19]){
+            line += "\n ##### THERE IS AN ERROR IN THE ABOVE RECORD ##### \n"
+          }
+          
+          //output as a line
+          outputString += line + "\n";
+        }
+        outputString += "</test_scores>";
+        //alert(outputString);
+        
         //output to area and replace , with |
-        $('#Output').text(outputString.replace(/(,)/g,"|"));
+        $('#Output').text(outputString);
       }
     </script>
   </body>
