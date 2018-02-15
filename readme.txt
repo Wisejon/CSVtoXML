@@ -1,9 +1,7 @@
 
 
-1. Create a report in Admit that mirrors the needed order of fields in the 2017_AAUU_Rules.pdf.
-  # Make sure to run report without any headers (or remove them before step 3)
-  # You may need to make some fields or scripts to accomplish populating the fields you need
-2. Run Report and open the CSV in a text editor (like notepad or atom)
-3. Copy out contents of the report and paste into the Input box
-4. Hit Generate
-5. Copy text into a new text file which you may use for uploading
+1. Download this to your local computer and run the index.html file.
+2. Grab your CSV of coursework data from Liaison.
+3. Copy the text from the CSV and paste into input window 
+4. Grab the output and putinto a new text file and give it the extension .decrypt
+5. Upload to your Collegenet test score directory.
