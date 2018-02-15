@@ -49,7 +49,8 @@
       <div class="col-md-2"></div>
       <div class="col-md-8">
         <h3>Output</h3>
-        <textarea class="form-control" rows="10" id="Output"></textarea>
+        <textarea class="form-control" rows="30" id="Output"></textarea>
+        <br/><br/><br/><br/>
       </div>
       <div class="col-md-2"></div>
     </div>
@@ -81,7 +82,9 @@
         var outputString = "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n\t<test_scores> \n\t\t" ; 
         for (var i=0; i < aLines.length; i++){
           var line = aLines[i].toString();
-
+          // find a " and then check if a , or " are next
+          var line = line.replace(/,\s/g,"~");
+          
           // replacements for XML validation
           //kick out ' " > and <
           line = line.replace(/'|"|<|>/gi,"");
@@ -90,7 +93,7 @@
 
           //place line into a new array
           var array = line.split(",");
-
+          
           //date and month vars
           var month = "";
           var date = "";
@@ -112,6 +115,9 @@
           date = array[12].toString() + "-" + month + "-01";
           // build new value lineString
           var line = "<test_score>\n\t\t<key CAS_CASPA-CAS_ID='" + array[0].toString() + "'/>\n\t\t" + "<type>COURSE</type>\n\t\t" + "<date>" + date + "</date>\n\t\t" + "<source>" + array[3].toString() + "</source>\n\t\t" + "<coursename>" + array[4].toString() + "</coursename>\n\t\t" + "<appgrade>" + array[5].toString() + "</appgrade>\n\t\t" + "<credits>" + array[6].toString() + "</credits>\n\t\t" + "<grade>" + array[7].toString() + "</grade>\n\t\t" + "<verifiedgrade>" + array[8].toString() + "</verifiedgrade>\n\t\t" + "<verifiedcredits>" + array[9].toString() + "</verifiedcredits>\n\t\t" + "<collegecode>" + array[10].toString() + "</collegecode>\n\t\t" + "<college>" + array[11].toString() + "</college>\n\t\t" + "<year>" + array[12].toString() + "</year>\n\t\t" + "<term>" + array[13].toString() + "</term>\n\t\t" + "<termtype>" + array[14].toString() + "</termtype>\n\t\t" + "<status>" + array[15].toString() + "</status>\n\t\t" + "<level>" + array[16].toString() + "</level>\n\t\t" + "<category>" + array[17].toString() + "</category>\n\t\t" + "<classification>" + array[18].toString() + "</classification>\n\t" + "</test_score>";
+
+          //fix commas that were turned into ~
+          line = line.replace(/~/g,", ");
 
           ///horrible way to check for additional array items
           if (array[19]){
