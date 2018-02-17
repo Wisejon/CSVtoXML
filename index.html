@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Generator</title>
+    <title>CASPA Course Data XML Generator</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -23,13 +23,13 @@
     <div class="row">
       <div class="col-md-2"></div>
       <div class="col-md-8">
-        <h1>CSV DATA TO XML DATA</h1>
+        <h1>CASPA Course Data XML Generator</h1>
         <h3>Instructions on How to Use This Tool</h3>
         <p>This tool is to be used in converting the output of the Liaison Coursework CSV into XML format for importing into CollegeNET. This tool is provided as is and comes with some caveats.</p>
         <ul>
           <li> Your data must be provided with the header rows (2) in the Input</li>
           <li> Your column headers are as follows:<br/> <samp>CAS ID,First Name,Last Name,Prefix,Course,Applicant Grade,Credits,CAS Grade,Verified Grade,Verified Credits,College Code,College,Year,Term,Term Type,Status,Level,Subject,Classification</samp></li>
-          <li> Any additional commas (,) in your coursework will mess up the output. Before uploading be sure to scan your import text and your output text to make sure that they look correct. I put a simple error check in place by searching for <span class="alert-danger">"##### ERROR"</span></li>
+          <li> Any additional commas (,) in your coursework will mess up the output. Before uploading be sure to scan your import text and your output text to make sure that they look correct. <strong>If your file has errors, a message will appear above the the out letting you know which line(s) of the CSV had issues.</strong></li>
           <li> Ampersands will be converted to 'and' and the following characters will be removed to conform with XML standards: > < " '</li>
         </ul>
       </div>
@@ -51,6 +51,7 @@
       <div class="col-md-2"></div>
       <div class="col-md-8">
         <h3>Output</h3>
+        <div id="Messages"></div>
         <textarea class="form-control" rows="30" id="Output"></textarea>
         <br/><br/><br/><br/>
       </div>
@@ -68,82 +69,74 @@
     <script>
       function reset(){
         $('#Output').replaceWith('<textarea class="form-control" rows="10" id="Output"></textarea>');
+        $('#Messages').replaceWith('<div id="Messages"></div>');
       }
 
-
       function outputArray(){
-        // split into lines
         
-        //var aLines = 
-        Papa.parse($('#Input'));
-        //$('#Input').val().split('\n');
-        alert(aLines);
+        var errorCheckBool = false;
+        // use papa parse to parse the input area into a JSON object
+        var aLines = Papa.parse($('#Input').val(),{skipEmptyLines: true});        
 
-        // #### ALL THIS DOWN HERE WILL NEED TO CHANGE
-        
-        //kick out first 2 lines
-        aLines.shift();
-        aLines.shift();
+        // kick out first 2 lines, you don't need them
+        aLines.data.shift();
+        aLines.data.shift();
 
-        var lastRow = aLines.pop();
-        if (!lastRow.length < 0 ){
-          aLines.push(lastRow)
-        }
-
-
-        //output array to string var
+        // output array to string var
         var outputString = "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n\t<test_scores> \n\t\t" ; 
-        for (var i=0; i < aLines.length; i++){
-          var line = aLines[i].toString();
-          // find a " and then check if a , or " are next
-          var line = line.replace(/,\s/g,"~");
+        for (var i=0; i < aLines.data.length; i++){
+          var line = aLines.data[i];
           
-          // replacements for XML validation
-          //kick out ' " > and <
-          line = line.replace(/'|"|<|>/gi,"");
-          //replace & with 'and'
-          line = line.replace(/&/gi,"and");
-          //place line into a new array
-          var array = line.split(",");
-          
-          //date and month vars
+          // iterate through items and remove invalid characters
+          for (a=0;a<line.length;a++){
+            // do replacements for XML validation
+            // ~ kick out ' " > and <
+            line[a] = line[a].replace(/'|"|<|>/gi,"");
+            // ~ replace & with 'and'
+            line[a] = line[a].replace(/&/gi,"and");
+          }
+
+          // check for additional array items and create an error message
+          if (line[19]){
+          errorCheckBool = true;
+          $( "#Messages" ).append( "<div class='alert alert-danger' role='alert'><strong>Oh Snap!</strong> There were too many columns on record row "+ (i+1) + "<br/><i>This may not affect the output, but you should double check it to be safe.</i></div>" );
+          }
+
+          // date and month vars
           var month = "";
           var date = "";
           
           // calc month: =IF(LEFT(N3,3)="SPR",3,IF(LEFT(N3,3)="SUM",6,IF(LEFT(N3,3)="FAL",9,IF(ISBLANK(N3),,1))))
-          if (array[13]){
-            if (array[13].toString().toUpperCase().startsWith("SPR")){
+          if (line[13]){
+            if (line[13].toString().toUpperCase().startsWith("SPR")){
               month = "03";
-            } else if (array[13].toString().toUpperCase().startsWith("SUM")){
+            } else if (line[13].toString().toUpperCase().startsWith("SUM")){
               month = "06";
-            } else if (array[13].toString().toUpperCase().startsWith("FAL")){
+            } else if (line[13].toString().toUpperCase().startsWith("FAL")){
               month = "09";
             } else{
               month = "01";
             }
           }
-          //alert (array[12]);
+
           // build date field
-          date = array[12].toString() + "-" + month + "-01";
+          date = line[12].toString() + "-" + month + "-01";
           // build new value lineString
-          var line = "<test_score>\n\t\t<key CAS_CASPA-CAS_ID='" + array[0].toString() + "'/>\n\t\t" + "<type>COURSE</type>\n\t\t" + "<date>" + date + "</date>\n\t\t" + "<source>" + array[3].toString() + "</source>\n\t\t" + "<coursename>" + array[4].toString() + "</coursename>\n\t\t" + "<appgrade>" + array[5].toString() + "</appgrade>\n\t\t" + "<credits>" + array[6].toString() + "</credits>\n\t\t" + "<grade>" + array[7].toString() + "</grade>\n\t\t" + "<verifiedgrade>" + array[8].toString() + "</verifiedgrade>\n\t\t" + "<verifiedcredits>" + array[9].toString() + "</verifiedcredits>\n\t\t" + "<collegecode>" + array[10].toString() + "</collegecode>\n\t\t" + "<college>" + array[11].toString() + "</college>\n\t\t" + "<year>" + array[12].toString() + "</year>\n\t\t" + "<term>" + array[13].toString() + "</term>\n\t\t" + "<termtype>" + array[14].toString() + "</termtype>\n\t\t" + "<status>" + array[15].toString() + "</status>\n\t\t" + "<level>" + array[16].toString() + "</level>\n\t\t" + "<category>" + array[17].toString() + "</category>\n\t\t" + "<classification>" + array[18].toString() + "</classification>\n\t" + "</test_score>";
-
-          //fix commas that were turned into ~
-          line = line.replace(/~/g,",");
-
-          ///horrible way to check for additional array items
-          if (array[19]){
-            line += "\n ##### THERE IS AN ERROR IN THE ABOVE RECORD ##### \n"
-          }
+          var line = "<test_score>\n\t\t<key CAS_CASPA-CAS_ID='" + line[0].toString() + "'/>\n\t\t" + "<type>COURSE</type>\n\t\t" + "<date>" + date + "</date>\n\t\t" + "<source>" + line[3].toString() + "</source>\n\t\t" + "<coursename>" + line[4].toString() + "</coursename>\n\t\t" + "<appgrade>" + line[5].toString() + "</appgrade>\n\t\t" + "<credits>" + line[6].toString() + "</credits>\n\t\t" + "<grade>" + line[7].toString() + "</grade>\n\t\t" + "<verifiedgrade>" + line[8].toString() + "</verifiedgrade>\n\t\t" + "<verifiedcredits>" + line[9].toString() + "</verifiedcredits>\n\t\t" + "<collegecode>" + line[10].toString() + "</collegecode>\n\t\t" + "<college>" + line[11].toString() + "</college>\n\t\t" + "<year>" + line[12].toString() + "</year>\n\t\t" + "<term>" + line[13].toString() + "</term>\n\t\t" + "<termtype>" + line[14].toString() + "</termtype>\n\t\t" + "<status>" + line[15].toString() + "</status>\n\t\t" + "<level>" + line[16].toString() + "</level>\n\t\t" + "<category>" + line[17].toString() + "</category>\n\t\t" + "<classification>" + line[18].toString() + "</classification>\n\t" + "</test_score>";
           
-          //output as a line
+          // add line to output string
           outputString += line + "\n";
         }
+
         outputString += "</test_scores>";
-        //alert(outputString);
         
-        //output to area and replace , with |
+        // output to the output text area
         $('#Output').text(outputString);
+
+        // print success message
+        if (!errorCheckBool){
+          $( "#Messages" ).append( "<div class='alert alert-success' role='alert'><strong>Hot salsa, you did it!</strong> You have yourself some importable XML. Copy the text in the output into a new file with the extension .decrypt and drop in the import folder.</div>" );
+          }
       }
     </script>
   </body>
