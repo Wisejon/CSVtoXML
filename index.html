@@ -72,11 +72,29 @@
         $('#Messages').replaceWith('<div id="Messages"></div>');
       }
 
+      function dateString(d){
+        var Y = d.getFullYear().toString(); // year
+        var M; // month
+        var D; // day
+        var h; // hour
+        var m; // minute
+        var s; //seconds
+        //just add one if larger than 8 else add one but also put a leading 0
+        if (d.getMonth() > 8){M = (d.getMonth()+ 1).toString();} else {M = "0" +  (d.getMonth()+ 1).toString()}
+        if (d.getDate() > 9){D = d.getDate().toString()} else {D = "0" + d.getDate().toString()}
+        if (d.getHours() > 9){h = d.getHours().toString()} else {h = "0" + d.getHours().toString()}
+        if (d.getMinutes() > 9){m = d.getMinutes().toString()} else {m = "0" + d.getMinutes().toString()}
+        if (d.getSeconds() > 9){s = d.getSeconds().toString()} else {s = "0" + d.getSeconds().toString()}
+
+        // Build Date
+        return (Y+M+D+h+m+s);
+      }
+
       function outputArray(){
         
         var errorCheckBool = false;
         // use papa parse to parse the input area into a JSON object
-        var aLines = Papa.parse($('#Input').val(),{skipEmptyLines: true});        
+        var aLines = Papa.parse($('#Input').val(),{skipEmptyLines: true});      
 
         // kick out first 2 lines, you don't need them
         aLines.data.shift();
@@ -135,8 +153,34 @@
 
         // print success message
         if (!errorCheckBool){
-          $( "#Messages" ).append( "<div class='alert alert-success' role='alert'><strong>Hot salsa, you did it!</strong> You have yourself some importable XML. Copy the text in the output into a new file with the extension .decrypt and drop in the import folder.</div>" );
+          $( "#Messages" ).append( "<div class='alert alert-success' role='alert'><strong>Hot salsa, you did it!</strong> You have yourself some importable XML.<br/><input type='button' class='btn btn-primary' id='dwn-btn' value='Download XML File'/></div>" );
           }
+
+        // download button
+        function download(filename, text) {
+          var element = document.createElement('a');
+          element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+          element.setAttribute('download', filename);
+
+          element.style.display = 'none';
+          document.body.appendChild(element);
+
+          element.click();
+
+          document.body.removeChild(element);
+        }
+
+        // start file download.
+        document.getElementById("dwn-btn").addEventListener("click", function(){
+          // make a date string for output
+          var returnDate = dateString(new Date()); 
+          // generate download of hello.txt file with some content
+          var text = document.getElementById("Output").value;
+          var filename = "CASPA_XML_Course_File_" + returnDate +".decrypt";
+
+          download(filename, text);
+        }, false);
+
       }
     </script>
   </body>
