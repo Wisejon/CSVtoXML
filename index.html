@@ -8,7 +8,7 @@
     <title>CASPA Course Data XML Generator</title>
 
     <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -17,7 +17,7 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    
+
   </head>
   <body>
     <div class="row">
@@ -61,12 +61,14 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="js/bootstrap.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 
     <!--INCLUDE PAPA PARSE -->
-    <script src="js/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.7/papaparse.js"></script>
 
     <script>
+      document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
       function reset(){
         $('#Output').replaceWith('<textarea class="form-control" rows="10" id="Output"></textarea>');
         $('#Messages').replaceWith('<div id="Messages"></div>');
@@ -91,20 +93,20 @@
       }
 
       function outputArray(){
-        
+
         var errorCheckBool = false;
         // use papa parse to parse the input area into a JSON object
-        var aLines = Papa.parse($('#Input').val(),{skipEmptyLines: true});      
+        var aLines = Papa.parse($('#Input').val(),{skipEmptyLines: true});
 
         // kick out first 2 lines, you don't need them
         aLines.data.shift();
         aLines.data.shift();
 
         // output array to string var
-        var outputString = "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n<test_scores> \n" ; 
+        var outputString = "<?xml version='1.0' encoding='UTF-8' standalone='no'?>\n<test_scores> \n" ;
         for (var i=0; i < aLines.data.length; i++){
           var line = aLines.data[i];
-          
+
           // iterate through items and remove invalid characters
           for (a=0;a<line.length;a++){
             // do replacements for XML validation
@@ -123,7 +125,7 @@
           // date and month vars
           var month = "";
           var date = "";
-          
+
           // calc month: =IF(LEFT(N3,3)="SPR",3,IF(LEFT(N3,3)="SUM",6,IF(LEFT(N3,3)="FAL",9,IF(ISBLANK(N3),,1))))
           if (line[13]){
             if (line[13].toString().toUpperCase().startsWith("SPR")){
@@ -141,13 +143,13 @@
           date = line[12].toString() + "-" + month + "-01";
           // build new value lineString
           var line = "\t<test_score>\n\t\t<key oid='" + line[0].toString() + "'/>\n\t\t" + "<type>COURSE</type>\n\t\t" + "<date>" + date + "</date>\n\t\t" + "<source>" + line[3].toString() + "</source>\n\t\t" + "<course_name>" + line[4].toString() + "</course_name>\n\t\t" + "<app_grade>" + line[5].toString() + "</app_grade>\n\t\t" + "<credits>" + line[6].toString() + "</credits>\n\t\t" + "<grade>" + line[7].toString() + "</grade>\n\t\t" + "<verified_grade>" + line[8].toString() + "</verified_grade>\n\t\t" + "<verified_credits>" + line[9].toString() + "</verified_credits>\n\t\t" + "<college_code>" + line[10].toString() + "</college_code>\n\t\t" + "<college>" + line[11].toString() + "</college>\n\t\t" + "<year>" + line[12].toString() + "</year>\n\t\t" + "<term>" + line[13].toString() + "</term>\n\t\t" + "<term_type>" + line[14].toString() + "</term_type>\n\t\t" + "<status>" + line[15].toString() + "</status>\n\t\t" + "<level>" + line[16].toString() + "</level>\n\t\t" + "<category>" + line[17].toString() + "</category>\n\t\t" + "<classification>" + line[18].toString() + "</classification>\n\t" + "</test_score>";
-          
+
           // add line to output string
           outputString += line + "\n";
         }
 
         outputString += "</test_scores>";
-        
+
         // output to the output text area
         $('#Output').text(outputString);
 
@@ -173,7 +175,7 @@
         // start file download.
         document.getElementById("dwn-btn").addEventListener("click", function(){
           // make a date string for output
-          var returnDate = dateString(new Date()); 
+          var returnDate = dateString(new Date());
           // generate download of hello.txt file with some content
           var text = document.getElementById("Output").value;
           var filename = "CASPA_XML_Course_File_" + returnDate +".decrypt";
